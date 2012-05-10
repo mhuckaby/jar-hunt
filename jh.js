@@ -164,11 +164,15 @@ var jh = {
 			}else if('-s' == arg){
 				// suppress 'found' output
 				jh.config.msg.found_jar = null
-			}else if('-x' == arg && (process.argv.length-1 > i) || '-e' == arg && (process.argv.length-1 > i)){
-				// set dependency.xml filename
+			}else if('-x' == arg && (process.argv.length-1 > i)){
+				// set dependency log filename
 				fs.unlink(process.argv[i+1])
 				jh.state.dependency_log = fs.createWriteStream(process.argv[i+1], {'flags': 'w'})
-			}
+			}else if('-e' == arg && (process.argv.length-1 > i)){
+				// set error log filename
+				fs.unlink(process.argv[i+1])
+				jh.state.error_log = fs.createWriteStream(process.argv[i+1], {'flags': 'w'})			
+			}	
 		}
 		
 		// default filenames?
