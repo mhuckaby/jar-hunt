@@ -136,7 +136,7 @@ var jh = {
 		var param = encodeURIComponent(util.format(jh.config.url.param_template, hash))
 		jh.config.emitter.emit('search', filename, util.format(jh.config.url.template, param))
 	},
-	initialize:function(args, logger, default_error_log_filename, default_info_log_filename){
+	initialize:function(args, logger){
 		// cmd line args
 		for(var i=0;i<args.length;i++){
 			var arg = args[i]
@@ -156,13 +156,6 @@ var jh = {
 				logger.error = fs.createWriteStream(args[i+1], {'flags': 'w'})
 			}	
 		}
-		
-		// default filenames?
-		if(!logger.error)
-			logger.error = fs.createWriteStream(default_error_log_filename, {'flags': 'w'})
-		if(!logger.info) 
-			logger.info = fs.createWriteStream(default_info_log_filename, {'flags': 'w'})
-
 		return this
 	},
 	register_events:function(emitter){
@@ -233,10 +226,19 @@ var jh = {
 			process.exit()
 		}
 		return this
+	},
+	validate_loggers:function(logger, default_error_log_filename, default_info_log_filename){
+		// default filenames?
+		if(!logger.error)
+			logger.error = fs.createWriteStream(default_error_log_filename, {'flags': 'w'})
+		if(!logger.info) 
+			logger.info = fs.createWriteStream(default_info_log_filename, {'flags': 'w'})			
+		return this	
 	}
 }
 jh
 	.validate_args(process.argv, __filename, jh.config.msg.help_text, jh.config.msg.validation_not_directory, jh.config.msg.validation_dir_ne)
-	.initialize(process.argv, jh.state.logger, jh.config.filename.error_xml, jh.config.filename.dependency_xml)
+	.initialize(process.argv, jh.state.logger)
+	.validate_loggers(jh.state.logger, jh.config.filename.error_xml, jh.config.filename.dependency_xml)
 	.register_events(jh.config.emitter)
 	.execute(process.argv[process.argv.length-1])	
