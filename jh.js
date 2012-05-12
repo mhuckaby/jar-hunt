@@ -136,23 +136,22 @@ var jh = {
 		var param = encodeURIComponent(util.format(jh.config.url.param_template, hash))
 		jh.config.emitter.emit('search', filename, util.format(jh.config.url.template, param))
 	},
-	initialize:function(args, logger){
+	initialize:function(args, config, logger, filesys){
 		// cmd line args
 		for(var i=0;i<args.length;i++){
 			var arg = args[i]
 			if('-r' == arg){
-				jh.config.recursive = true
+				config.recursive = true
 			}else if('-s' == arg){
 				// suppress 'found' output
-				jh.config.msg.found_jar = null
+				config.msg.found_jar = null
 			}else if('-x' == arg && (args.length-1 > i)){
 				// set dependency log filename
-				fs.unlink(args[i+1])
-				//jh.state.dependency_log = fs.createWriteStream(args[i+1], {'flags': 'w'})
+				filesys.unlink(args[i+1])
 				logger.info = fs.createWriteStream(args[i+1], {'flags': 'w'})
 			}else if('-e' == arg && (args.length-1 > i)){
 				// set error log filename
-				fs.unlink(args[i+1])
+				filesys.unlink(args[i+1])
 				logger.error = fs.createWriteStream(args[i+1], {'flags': 'w'})
 			}	
 		}
@@ -212,7 +211,7 @@ var jh = {
 			 	console.log(text)
 			})
 			process.exit()
-		}		
+		}
 		
 		// validate directory was supplied and that it exists
 		if(path.existsSync(args[args.length-1])){
@@ -236,9 +235,10 @@ var jh = {
 		return this	
 	}
 }
+
 jh
 	.validate_args(process.argv, __filename, jh.config.msg.help_text, jh.config.msg.validation_not_directory, jh.config.msg.validation_dir_ne)
-	.initialize(process.argv, jh.state.logger)
+	.initialize(process.argv, jh.config, jh.state.logger, fs)
 	.validate_loggers(jh.state.logger, jh.config.filename.error_xml, jh.config.filename.dependency_xml)
 	.register_events(jh.config.emitter)
-	.execute(process.argv[process.argv.length-1])	
+	.execute(process.argv[process.argv.length-1])
