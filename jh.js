@@ -90,17 +90,6 @@ var jh = {
 		error_log:null,
 		dependency_log:null,		
 	},
-	execute:function(dir){
-		var operating_dir = dir ? dir : process.argv[process.argv.length-1]
-		fs.readdir(operating_dir, function(err, filenames){
-				filenames.forEach(function(filename){					
-					var qualified_filename = (operating_dir ? (operating_dir + '/') : '') + filename
-					jh.filter(qualified_filename)
-				})
-			}
-		)
-		return jh			
-	},
 	error_counter:function(error){
 		jh.state.errors.push(error)
 		if(++jh.state.error_count == jh.config.max_errors){
@@ -110,6 +99,16 @@ var jh = {
 			})
 			process.exit()
 		}
+	},
+	execute:function(dir){
+		fs.readdir(dir, function(err, filenames){
+				filenames.forEach(function(filename){					
+					var qualified_filename = (dir ? (dir + '/') : '') + filename
+					jh.filter(qualified_filename)
+				})
+			}
+		)
+		return jh			
 	},
 	filter:function(filename, index, list, regex){
 		fs.stat(filename, function(error, stats){
@@ -135,43 +134,23 @@ var jh = {
 		var param = encodeURIComponent(util.format(jh.config.url.param_template, hash))
 		jh.config.emitter.emit('search', filename, util.format(jh.config.url.template, param))
 	},
-	initialize:function(){
-		// validate parameter count		
-		if(process.argv[process.argv.length-1] == __filename){
-			jh.config.msg.help_text.forEach(function(text){
-			 	console.log(text)
-			})
-			process.exit()					
-		}		
-		
-		// validate directory was supplied and that it exists
-		if(path.existsSync(process.argv[process.argv.length-1])){
-			var stat = fs.statSync(process.argv[process.argv.length-1])
-			if(!stat.isDirectory()){
-				console.log(util.format(jh.config.msg.validation_not_directory, process.argv[process.argv.length-1]))
-				process.exit()
-			}
-		}else{
-			console.log(util.format(jh.config.msg.validation_dir_ne, process.argv[process.argv.length-1]))
-			process.exit()
-		}
-
+	initialize:function(args){
 		// cmd line args
-		for(var i=0;i<process.argv.length;i++){
-			var arg = process.argv[i]
+		for(var i=0;i<args.length;i++){
+			var arg = args[i]
 			if('-r' == arg){
 				jh.config.recursive = true
 			}else if('-s' == arg){
 				// suppress 'found' output
 				jh.config.msg.found_jar = null
-			}else if('-x' == arg && (process.argv.length-1 > i)){
+			}else if('-x' == arg && (args.length-1 > i)){
 				// set dependency log filename
-				fs.unlink(process.argv[i+1])
-				jh.state.dependency_log = fs.createWriteStream(process.argv[i+1], {'flags': 'w'})
-			}else if('-e' == arg && (process.argv.length-1 > i)){
+				fs.unlink(args[i+1])
+				jh.state.dependency_log = fs.createWriteStream(args[i+1], {'flags': 'w'})
+			}else if('-e' == arg && (args.length-1 > i)){
 				// set error log filename
-				fs.unlink(process.argv[i+1])
-				jh.state.error_log = fs.createWriteStream(process.argv[i+1], {'flags': 'w'})			
+				fs.unlink(args[i+1])
+				jh.state.error_log = fs.createWriteStream(args[i+1], {'flags': 'w'})			
 			}	
 		}
 		
@@ -181,25 +160,27 @@ var jh = {
 		if(!jh.state.dependency_log) 
 			jh.state.dependency_log = fs.createWriteStream(jh.config.filename.dependency_xml, {'flags': 'w'})
 
+		return this
+	},
+	register_events:function(emitter){
 		// setup events
-		jh.config.emitter.on('generate_url', function(filename, hash){
+		emitter.on('generate_url', function(filename, hash){
 			jh.generate_url(filename, hash)
 		})
-		jh.config.emitter.on('search', function(filename, path){
+		emitter.on('search', function(filename, path){
 			jh.search(filename, path)
 		})
-		jh.config.emitter.on('error', function(error){
+		emitter.on('error', function(error){
 			jh.error_counter(error)
 		})
-		jh.config.emitter.on('write_error_xml', function(error){
+		emitter.on('write_error_xml', function(error){
 			jh.state.error_log.write(error)
 		})
-		jh.config.emitter.on('write_dependency_xml', function(xml){
+		emitter.on('write_dependency_xml', function(xml){
 			jh.state.dependency_log.write(xml)
-		})		
-		
-		return jh
-	},	
+		})
+		return this
+	},
 	search:function(filename, path){
 		var options = {
 			'host':jh.config.http_options.host,
@@ -219,5 +200,31 @@ var jh = {
 			jh.config.emitter.emit('error',error)
 		})		
 	},
+	validate_args:function(args, this_script, help_text){
+		// validate parameter count		
+		if(args[args.length-1] == this_script){
+			jh.config.msg.help_text.forEach(function(text){
+			 	console.log(text)
+			})
+			process.exit()
+		}		
+		
+		// validate directory was supplied and that it exists
+		if(path.existsSync(args[args.length-1])){
+			var stat = fs.statSync(args[args.length-1])
+			if(!stat.isDirectory()){
+				console.log(util.format(jh.config.msg.validation_not_directory, args[args.length-1]))
+				jh.config.emitter.emit('exit')
+			}
+		}else{
+			console.log(util.format(jh.config.msg.validation_dir_ne, args[args.length-1]))
+			jh.config.emitter.emit('exit')
+		}
+		return this
+	}
 }
-jh.initialize().execute()
+jh
+	.validate_args(process.argv, __filename, jh.config.msg.help_text)
+	.initialize(process.argv)
+	.register_events(jh.config.emitter)
+	.execute(process.argv[process.argv.length-1])
