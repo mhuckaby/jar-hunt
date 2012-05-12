@@ -18,7 +18,8 @@ usage:
 Thanks to Sonatype, Inc. for hosting central repository jar and look-up service (search.maven.org)
 This program is not endorsed, owned by nor affiliated with Sonatype, Inc.
 
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+---
+
 Copyright 2012 Matthew David Huckaby
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +33,7 @@ Copyright 2012 Matthew David Huckaby
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+
 ---
 
 - Developed with nodejs v0.6.7
