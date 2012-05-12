@@ -214,7 +214,7 @@ var jh = {
 			var stat = fs.statSync(args[args.length-1])
 			if(!stat.isDirectory()){
 				console.log(util.format(msg_not_dir, args[args.length-1]))
-				jh.config.emitter.emit('exit')
+				process.exit()
 			}
 		}else{
 			console.log(util.format(msg_dir_ne, args[args.length-1]))
