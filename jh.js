@@ -46,7 +46,7 @@ var util = require('util')
 var jh = { 	
 	config:{
 		emitter:new events.EventEmitter(),
-		filename:{
+		filenames:{
 			dependency_xml:'dependency.xml',
 			error_xml:'error.xml'
 		},
@@ -55,7 +55,7 @@ var jh = {
 			port:80, 	
 		},
 		max_errors:3,
-		msg:{
+		msgs:{
 			error_exit:'Encountered too many errors to continue.',
 			found_jar:'found, "%s", hash(sha1)=%s',
 			help_text:['jar-hunt, v.1.0.0b', 
@@ -95,7 +95,7 @@ var jh = {
 	error_counter:function(error){
 		jh.state.errors.push(error)
 		if(++jh.state.error_count == jh.config.max_errors){
-			console.log(jh.config.msg.error_exit)
+			console.log(jh.config.msgs.error_exit)
 			jh.state.errors.forEach(function(e){
 				console.log(util.format('\t%s',e))
 			})
@@ -126,8 +126,8 @@ var jh = {
 	generate_hash:function(filename){
 		fs.readFile(filename, function(err, data){
 			var hash = crypto.createHash('sha1').update(data).digest('hex')
-			if(jh.config.msg.found_jar){
-				console.log(util.format(jh.config.msg.found_jar, filename, hash))
+			if(jh.config.msgs.found_jar){
+				console.log(util.format(jh.config.msgs.found_jar, filename, hash))
 			}
 			jh.config.emitter.emit('generate_url', filename, hash)
 		})		
@@ -136,7 +136,7 @@ var jh = {
 		var param = encodeURIComponent(util.format(jh.config.url.param_template, hash))
 		jh.config.emitter.emit('search', filename, util.format(jh.config.url.template, param))
 	},
-	initialize:function(args, config, logger, filesys){
+	initialize:function(args, config, fs, logger){
 		// cmd line args
 		for(var i=0;i<args.length;i++){
 			var arg = args[i]
@@ -144,14 +144,14 @@ var jh = {
 				config.recursive = true
 			}else if('-s' == arg){
 				// suppress 'found' output
-				config.msg.found_jar = null
+				config.msgs.found_jar = null
 			}else if('-x' == arg && (args.length-1 > i)){
 				// set dependency log filename
-				filesys.unlink(args[i+1])
+				fs.unlink(args[i+1])
 				logger.info = fs.createWriteStream(args[i+1], {'flags': 'w'})
 			}else if('-e' == arg && (args.length-1 > i)){
 				// set error log filename
-				filesys.unlink(args[i+1])
+				fs.unlink(args[i+1])
 				logger.error = fs.createWriteStream(args[i+1], {'flags': 'w'})
 			}	
 		}
@@ -204,41 +204,43 @@ var jh = {
 			jh.config.emitter.emit('error',error)
 		})		
 	},
-	validate_args:function(args, this_script, help_text, msg_not_dir, msg_dir_ne){
-		// validate parameter count		
-		if(args[args.length-1] == this_script){
-			help_text.forEach(function(text){
+	validate_args:function(console, fs, messages, path, process, this_script){	
+		var last_arg = process.argv[process.argv.length-1]	
+		
+		// validate parameter count	
+		if(last_arg == this_script){
+			messages.help_text.forEach(function(text){
 			 	console.log(text)
 			})
 			process.exit()
 		}
 		
 		// validate directory was supplied and that it exists
-		if(path.existsSync(args[args.length-1])){
-			var stat = fs.statSync(args[args.length-1])
+		if(path.existsSync(last_arg)){
+			var stat = fs.statSync(last_arg)
 			if(!stat.isDirectory()){
-				console.log(util.format(msg_not_dir, args[args.length-1]))
+				console.log(util.format(messages.validation_not_directory, last_arg))
 				process.exit()
 			}
 		}else{
-			console.log(util.format(msg_dir_ne, args[args.length-1]))
+			console.log(util.format(messages.validation_dir_ne, last_arg))
 			process.exit()
 		}
 		return this
 	},
-	validate_loggers:function(logger, default_error_log_filename, default_info_log_filename){
+	validate_loggers:function(default_filenames, fs, logger){
 		// default filenames?
 		if(!logger.error)
-			logger.error = fs.createWriteStream(default_error_log_filename, {'flags': 'w'})
+			logger.error = fs.createWriteStream(default_filenames.error_xml, {'flags': 'w'})
 		if(!logger.info) 
-			logger.info = fs.createWriteStream(default_info_log_filename, {'flags': 'w'})			
+			logger.info = fs.createWriteStream(default_filenames.dependency_xml, {'flags': 'w'})			
 		return this	
 	}
 }
 
 jh
-	.validate_args(process.argv, __filename, jh.config.msg.help_text, jh.config.msg.validation_not_directory, jh.config.msg.validation_dir_ne)
-	.initialize(process.argv, jh.config, jh.state.logger, fs)
-	.validate_loggers(jh.state.logger, jh.config.filename.error_xml, jh.config.filename.dependency_xml)
+	.validate_args(console, fs, jh.config.msgs, path, process)
+	.initialize(process.argv, jh.config, fs, jh.state.logger)
+	.validate_loggers(jh.config.filenames, fs, jh.state.logger)
 	.register_events(jh.config.emitter)
 	.execute(process.argv[process.argv.length-1])
