@@ -200,7 +200,7 @@ var jh = {
 			jh.config.emitter.emit('error',error)
 		})		
 	},
-	validate_args:function(args, this_script, help_text){
+	validate_args:function(args, this_script, help_text, msg_not_dir, msg_dir_ne){
 		// validate parameter count		
 		if(args[args.length-1] == this_script){
 			jh.config.msg.help_text.forEach(function(text){
@@ -213,18 +213,18 @@ var jh = {
 		if(path.existsSync(args[args.length-1])){
 			var stat = fs.statSync(args[args.length-1])
 			if(!stat.isDirectory()){
-				console.log(util.format(jh.config.msg.validation_not_directory, args[args.length-1]))
+				console.log(util.format(msg_not_dir, args[args.length-1]))
 				jh.config.emitter.emit('exit')
 			}
 		}else{
-			console.log(util.format(jh.config.msg.validation_dir_ne, args[args.length-1]))
-			jh.config.emitter.emit('exit')
+			console.log(util.format(msg_dir_ne, args[args.length-1]))
+			process.exit()
 		}
 		return this
 	}
 }
 jh
-	.validate_args(process.argv, __filename, jh.config.msg.help_text)
+	.validate_args(process.argv, __filename, jh.config.msg.help_text, jh.config.msg.validation_not_directory, jh.config.msg.validation_dir_ne)
 	.initialize(process.argv)
 	.register_events(jh.config.emitter)
 	.execute(process.argv[process.argv.length-1])
