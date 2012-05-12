@@ -207,7 +207,7 @@ var jh = {
 	validate_args:function(args, this_script, help_text, msg_not_dir, msg_dir_ne){
 		// validate parameter count		
 		if(args[args.length-1] == this_script){
-			jh.config.msg.help_text.forEach(function(text){
+			help_text.forEach(function(text){
 			 	console.log(text)
 			})
 			process.exit()
