@@ -87,8 +87,10 @@ var jh = {
 	state:{
 		error_count:0,
 		errors:[],
-		error_log:null,
-		dependency_log:null,		
+		logger:{
+			error:null,
+			info:null
+		},
 	},
 	error_counter:function(error){
 		jh.state.errors.push(error)
@@ -104,7 +106,7 @@ var jh = {
 		fs.readdir(dir, function(err, filenames){
 				filenames.forEach(function(filename){					
 					var qualified_filename = (dir ? (dir + '/') : '') + filename
-					jh.filter(qualified_filename)
+					jh.config.emitter.emit('filter', qualified_filename)
 				})
 			}
 		)
@@ -113,10 +115,10 @@ var jh = {
 	filter:function(filename, index, list, regex){
 		fs.stat(filename, function(error, stats){
 			if(jh.config.recursive && stats.isDirectory()){
-				jh.execute(filename)
+				jh.config.emitter.emit('execute_on_dir', filename)
 			}else{
 				if(filename.match(regex ? regex : /\.jar$/)){
-					jh.generate_hash(filename)
+					jh.config.emitter.emit('generate_hash', filename)
 				}
 			}
 		})
@@ -134,7 +136,7 @@ var jh = {
 		var param = encodeURIComponent(util.format(jh.config.url.param_template, hash))
 		jh.config.emitter.emit('search', filename, util.format(jh.config.url.template, param))
 	},
-	initialize:function(args){
+	initialize:function(args, logger, default_error_log_filename, default_info_log_filename){
 		// cmd line args
 		for(var i=0;i<args.length;i++){
 			var arg = args[i]
@@ -146,38 +148,48 @@ var jh = {
 			}else if('-x' == arg && (args.length-1 > i)){
 				// set dependency log filename
 				fs.unlink(args[i+1])
-				jh.state.dependency_log = fs.createWriteStream(args[i+1], {'flags': 'w'})
+				//jh.state.dependency_log = fs.createWriteStream(args[i+1], {'flags': 'w'})
+				logger.info = fs.createWriteStream(args[i+1], {'flags': 'w'})
 			}else if('-e' == arg && (args.length-1 > i)){
 				// set error log filename
 				fs.unlink(args[i+1])
-				jh.state.error_log = fs.createWriteStream(args[i+1], {'flags': 'w'})			
+				logger.error = fs.createWriteStream(args[i+1], {'flags': 'w'})
 			}	
 		}
 		
 		// default filenames?
-		if(!jh.state.error_log)			
-			jh.state.error_log = fs.createWriteStream(jh.config.filename.error_xml, {'flags': 'w'})			
-		if(!jh.state.dependency_log) 
-			jh.state.dependency_log = fs.createWriteStream(jh.config.filename.dependency_xml, {'flags': 'w'})
+		if(!logger.error)
+			logger.error = fs.createWriteStream(default_error_log_filename, {'flags': 'w'})
+		if(!logger.info) 
+			logger.info = fs.createWriteStream(default_info_log_filename, {'flags': 'w'})
 
 		return this
 	},
 	register_events:function(emitter){
 		// setup events
+		emitter.on('error', function(error){
+			jh.error_counter(error)
+		})
+		emitter.on('execute_on_dir', function(filename){
+			jh.execute(filename)
+		})
+		emitter.on('filter', function(qualified_filename){
+			jh.filter(qualified_filename)
+		})
+		emitter.on('generate_hash', function(filename){
+			jh.generate_hash(filename)	
+		})
 		emitter.on('generate_url', function(filename, hash){
 			jh.generate_url(filename, hash)
 		})
 		emitter.on('search', function(filename, path){
 			jh.search(filename, path)
 		})
-		emitter.on('error', function(error){
-			jh.error_counter(error)
+		emitter.on('write_dependency_xml', function(xml){
+			jh.state.logger.info.write(xml)
 		})
 		emitter.on('write_error_xml', function(error){
-			jh.state.error_log.write(error)
-		})
-		emitter.on('write_dependency_xml', function(xml){
-			jh.state.dependency_log.write(xml)
+			jh.state.logger.error.write(error)
 		})
 		return this
 	},
@@ -225,6 +237,6 @@ var jh = {
 }
 jh
 	.validate_args(process.argv, __filename, jh.config.msg.help_text, jh.config.msg.validation_not_directory, jh.config.msg.validation_dir_ne)
-	.initialize(process.argv)
+	.initialize(process.argv, jh.state.logger, jh.config.filename.error_xml, jh.config.filename.dependency_xml)
 	.register_events(jh.config.emitter)
-	.execute(process.argv[process.argv.length-1])
+	.execute(process.argv[process.argv.length-1])	
