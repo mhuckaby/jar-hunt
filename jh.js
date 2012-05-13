@@ -90,40 +90,8 @@ var jh = {
 				'</dependency>\n'
 		}
 	},
-	execute:function(dir, config){
-		var dir = dir ? dir : config.process.argv[config.process.argv.length-1]
-		config.requires.fs.readdir(dir, function(err, filenames){
-				filenames.forEach(function(filename){					
-					var qualified_filename = (dir ? (dir + '/') : '') + filename
-					config.emitter.emit('filter', qualified_filename, config)
-				})
-			}
-		)
-		return jh			
-	},
-	filter:function(filename, config){
-		config.requires.fs.stat(filename, function(error, stats){
-			if(config.recursive && stats.isDirectory()){
-				config.emitter.emit('execute_on_dir', filename, config)
-			}else{
-				if(filename.match(/\.jar$/)){
-					config.emitter.emit('generate_hash', filename, config)
-				}
-			}
-		})
-	},
-	generate_hash:function(filename, config){
-		config.requires.fs.readFile(filename, function(err, data){
-			var hash = config.requires.crypto.createHash('sha1').update(data).digest('hex')
-			if(config.msgs.found_jar){
-				config.console.log(config.requires.util.format(config.msgs.found_jar, filename, hash))
-			}
-			config.emitter.emit('generate_url', filename, hash, config)
-		})		
-	},
-	generate_url:function(filename, hash, config){
-		var param = encodeURIComponent(config.requires.util.format(jh.config.url.param_template, hash))
-		config.emitter.emit('search', filename, config.requires.util.format(jh.config.url.template, param), config)
+	execute:function(config){
+		config.emitter.emit('execute', null, config)
 	},
 	initialize:function(config){
 		// cmd line args
@@ -149,20 +117,66 @@ var jh = {
 	},
 	register_events:function(emitter){
 		// setup events
-		emitter.on('execute_on_dir', function(filename, config){
-			jh.execute(filename, config)
+		emitter.on('execute', function(dir, config){
+			var dir = dir ? dir : config.process.argv[config.process.argv.length-1]
+			config.requires.fs.readdir(dir, function(err, filenames){
+					filenames.forEach(function(filename){					
+						var qualified_filename = (dir ? (dir + '/') : '') + filename
+						config.emitter.emit('filter', qualified_filename, config)
+					})
+				}
+			)
 		})
-		emitter.on('filter', function(qualified_filename, config){
-			jh.filter(qualified_filename, config)
+		
+		emitter.on('filter', function(filename, config){
+			config.requires.fs.stat(filename, function(error, stats){
+				if(config.recursive && stats.isDirectory()){
+					config.emitter.emit('execute', filename, config)
+				}else{
+					if(filename.match(/\.jar$/)){
+						config.emitter.emit('generate_hash', filename, config)
+					}
+				}
+			})
 		})
+		
 		emitter.on('generate_hash', function(filename, config){
-			jh.generate_hash(filename, config)
+			config.requires.fs.readFile(filename, function(err, data){
+				var hash = config.requires.crypto.createHash('sha1').update(data).digest('hex')
+				if(config.msgs.found_jar){
+					config.console.log(config.requires.util.format(config.msgs.found_jar, filename, hash))
+				}
+				config.emitter.emit('generate_url', filename, hash, config)
+			})		
+
 		})
+		
 		emitter.on('generate_url', function(filename, hash, config){
-			jh.generate_url(filename, hash, config)
+			var param = encodeURIComponent(config.requires.util.format(config.url.param_template, hash))
+			config.emitter.emit('search', filename, config.requires.util.format(config.url.template, param), config)
 		})
+		
 		emitter.on('search', function(filename, path, config){
-			jh.search(filename, path, config)
+			var options = {
+				'host':config.http_options.host,
+				'port':config.http_options.port,
+				'path':path
+			}
+			config.requires.http.get(options, function(res) {  
+				res.on('data', function(chunk) {
+					try{
+						var obj = JSON.parse(chunk)
+						var value = config.requires.util.format(config.xml.template, obj.response.docs[0].g, obj.response.docs[0].a, obj.response.docs[0].v)
+						config.emitter.emit('write_dependency_xml', value, config)
+					}catch(e){
+						var value = config.requires.util.format(config.xml.error_template, filename, options.host, options.path)
+						config.emitter.emit('write_error_xml', value, config)
+					}
+				})
+			}).on('error', function(error) {			
+				config.console.log(error)
+				config.process.exit()
+			})
 		})
 		emitter.on('write_dependency_xml', function(xml, config){
 			config.logger.info.write(xml)
@@ -171,28 +185,6 @@ var jh = {
 			config.logger.error.write(error)
 		})
 		return this
-	},
-	search:function(filename, path, config){
-		var options = {
-			'host':config.http_options.host,
-			'port':config.http_options.port,
-			'path':path
-		}
-		config.requires.http.get(options, function(res) {  
-			res.on('data', function(chunk) {
-				try{
-					var obj = JSON.parse(chunk)
-					var value = config.requires.util.format(config.xml.template, obj.response.docs[0].g, obj.response.docs[0].a, obj.response.docs[0].v)
-					config.emitter.emit('write_dependency_xml', value, config)
-				}catch(e){
-					var value = config.requires.util.format(config.xml.error_template, filename, options.host, options.path)
-					config.emitter.emit('write_error_xml', value, config)
-				}
-			})
-		}).on('error', function(error) {			
-			config.console.log(error)
-			config.process.exit()
-		})		
 	},
 	validate_args:function(config){
 		var last_arg = config.process.argv[config.process.argv.length-1]	
@@ -221,9 +213,9 @@ var jh = {
 	validate_loggers:function(config){
 		// default filenames?
 		if(!config.logger.error)
-			config.logger.error = config.requires.fs.createWriteStream(jh.config.filenames.error_xml, {'flags': 'w'})
+			config.logger.error = config.requires.fs.createWriteStream(config.filenames.error_xml, {'flags': 'w'})
 		if(!config.logger.info) 
-			config.logger.info = config.requires.fs.createWriteStream(jh.config.filenames.dependency_xml, {'flags': 'w'})			
+			config.logger.info = config.requires.fs.createWriteStream(config.filenames.dependency_xml, {'flags': 'w'})			
 		return this	
 	}
 }
@@ -233,4 +225,4 @@ jh
 	.initialize(jh.config)
 	.validate_loggers(jh.config)
 	.register_events(jh.config.emitter)
-	.execute(null, jh.config)
+	.execute(jh.config)
