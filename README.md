@@ -36,4 +36,5 @@ Copyright 2012 Matthew David Huckaby
 
 ---
 
-- Developed with nodejs v0.6.7
+Developed with nodejs v0.8.1
+http://nodejs.org/
