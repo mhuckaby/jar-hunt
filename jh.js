@@ -157,7 +157,7 @@ var jh = {
     })
 
     emitter.on('chew-queue', function(config){
-            if(queue.length > 0){
+            if(queue.length){
                 emitter.emit('generate_hash_asynch', queue.pop(), config, function(){
                     emitter.emit('chew-queue', config);
                 })
