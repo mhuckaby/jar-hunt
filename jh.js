@@ -37,60 +37,61 @@ Copyright 2012 Matthew David Huckaby
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 */
 
-var jh = {
-  "config": {
-    "console": console,
-    "emitter": null,
-    "filenames": {
-      "dependency_xml": 'dependency.xml',
-      "error_xml": 'error.xml',
-      "this_script": __filename
-    },
-    "http_options": {
-      "host": 'search.maven.org',
-      "port": 80,
-    },
-    "logger": {
-      "error": null,
-      "info": null
-    },
-    "msgs": {
-      "found_jar": 'found \t: %s\nhash \t: %s',
-      "help_text": ['jar-hunt, v.1.0.0b',
-        'usage:',
-        '\t[node] jh.js [-s -x $filename -e $filename] ${directory_that_contains_jars}\n',
-        '\t-e ${filename} to write error output, default is, "error.xml"',
-        '\t-r recursively search for jar-files',
-        '\t-s suppress "found" messages',
-        '\t-x ${filename} to write xml output, default is, "dependency.xml"',
-        ],
-      "validation_not_directory": 'argument, "%s" is not a directory',
-      "validation_dir_ne": 'directory, "%s" does not exist.'
-    },
-    "process": process,
-    "recursive": false,
-    "requires": {
-      "crypto": require('crypto'),
-      "events": require('events'),
-      "fs": require('fs'),
-      "http": require('http'),
-      "path": require('path'),
-      "util": require('util')
-    },
-    "url": {
-      "param_template": ':"%s"',
-      "template": '/solrsearch/select?q=1%s&rows=20&wt=json'
-    },
-    "xml": {
-      "error_template": '<error\nfile="%s"\nurl="%s%s" />\n',
-      "template":
-        '<dependency>\n' +
-        '\t<groupId>%s</groupId>\n' +
-        '\t<artifactId>%s</artifactId>\n' +
-        '\t<version>%s</version>\n' +
-        '</dependency>\n'
-    }
+var config = {
+  "console": console,
+  "emitter": null,
+  "filenames": {
+    "dependency_xml": 'dependency.xml',
+    "error_xml": 'error.xml',
+    "this_script": __filename
   },
+  "http_options": {
+    "host": 'search.maven.org',
+    "port": 80,
+  },
+  "logger": {
+    "error": null,
+    "info": null
+  },
+  "msgs": {
+    "found_jar": 'found \t: %s\nhash \t: %s',
+    "help_text": ['jar-hunt, v.1.0.0b',
+      'usage:',
+      '\t[node] jh.js [-s -x $filename -e $filename] ${directory_that_contains_jars}\n',
+      '\t-e ${filename} to write error output, default is, "error.xml"',
+      '\t-r recursively search for jar-files',
+      '\t-s suppress "found" messages',
+      '\t-x ${filename} to write xml output, default is, "dependency.xml"',
+      ],
+    "validation_not_directory": 'argument, "%s" is not a directory',
+    "validation_dir_ne": 'directory, "%s" does not exist.'
+  },
+  "process": process,
+  "recursive": false,
+  "requires": {
+    "crypto": require('crypto'),
+    "events": require('events'),
+    "fs": require('fs'),
+    "http": require('http'),
+    "path": require('path'),
+    "util": require('util')
+  },
+  "url": {
+    "param_template": ':"%s"',
+    "template": '/solrsearch/select?q=1%s&rows=20&wt=json'
+  },
+  "xml": {
+    "error_template": '<error\nfile="%s"\nurl="%s%s" />\n',
+    "template":
+      '<dependency>\n' +
+      '\t<groupId>%s</groupId>\n' +
+      '\t<artifactId>%s</artifactId>\n' +
+      '\t<version>%s</version>\n' +
+      '</dependency>\n'
+  }
+};
+
+var jh = {
   "execute": function(config) {
     config.emitter.emit('execute', null, config);
   },
@@ -254,8 +255,8 @@ var jh = {
 }
 
 jh
-  .validate_args(jh.config)
-  .initialize(jh.config)
-  .validate_loggers(jh.config)
-  .register_events(jh.config.emitter)
-  .execute(jh.config);
+  .validate_args(config)
+  .initialize(config)
+  .validate_loggers(config)
+  .register_events(config.emitter)
+  .execute(config);
