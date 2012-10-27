@@ -36,53 +36,54 @@ Copyright 2012 Matthew David Huckaby
    limitations under the License.
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 */
+
 var jh = {
-  config:{
-    console:console,
-    emitter:null,
-    filenames:{
-      dependency_xml:'dependency.xml',
-      error_xml:'error.xml',
-      this_script:__filename
+"config": {
+    "console": console,
+    "emitter": null,
+    "filenames": {
+      "dependency_xml": 'dependency.xml',
+      "error_xml": 'error.xml',
+      "this_script": __filename
     },
-    http_options:{  
-      host:'search.maven.org',
-      port:80,   
+    "http_options": {
+      "host": 'search.maven.org',
+      "port": 80,
     },
-    logger:{
-      error:null,
-      info:null
+    "logger": {
+      "error": null,
+      "info": null
     },
-    msgs:{
-      found_jar:'found \t: %s\nhash \t: %s',
-      help_text:['jar-hunt, v.1.0.0b', 
-        'usage:', 
+    "msgs": {
+      "found_jar": 'found \t: %s\nhash \t: %s',
+      "help_text": ['jar-hunt, v.1.0.0b',
+        'usage:',
         '\t[node] jh.js [-s -x $filename -e $filename] ${directory_that_contains_jars}\n',
         '\t-e ${filename} to write error output, default is, "error.xml"',
         '\t-r recursively search for jar-files',
         '\t-s suppress "found" messages',
-        '\t-x ${filename} to write xml output, default is, "dependency.xml"',        
-        ],      
-      validation_not_directory:'argument, "%s" is not a directory',
-      validation_dir_ne:'directory, "%s" does not exist.'
+        '\t-x ${filename} to write xml output, default is, "dependency.xml"',
+        ],
+      "validation_not_directory": 'argument, "%s" is not a directory',
+      "validation_dir_ne": 'directory, "%s" does not exist.'
     },
-    process:process,
-    recursive:false,
-    requires:{
-      crypto:require('crypto'),
-      events:require('events'),
-      fs:require('fs'),
-      http:require('http'),
-      path:require('path'),
-      util:require('util')      
+    "process": process,
+    "recursive": false,
+    "requires": {
+      "crypto": require('crypto'),
+      "events": require('events'),
+      "fs": require('fs'),
+      "http": require('http'),
+      "path": require('path'),
+      "util": require('util')
     },
-    url:{
-      param_template:':"%s"',
-      template:'/solrsearch/select?q=1%s&rows=20&wt=json'
+    "url": {
+      "param_template": ':"%s"',
+      "template": '/solrsearch/select?q=1%s&rows=20&wt=json'
     },
-    xml:{
-      error_template:'<error\nfile="%s"\nurl="%s%s" />\n',
-      template:
+    "xml": {
+      "error_template": '<error\nfile="%s"\nurl="%s%s" />\n',
+      "template":
         '<dependency>\n' +
         '\t<groupId>%s</groupId>\n' +
         '\t<artifactId>%s</artifactId>\n' +
@@ -90,10 +91,10 @@ var jh = {
         '</dependency>\n'
     }
   },
-  execute:function(config) {
+  "execute": function(config) {
     config.emitter.emit('execute', null, config);
   },
-  initialize:function(config) {
+  "initialize": function(config) {
     // cmd line args
     for(var i=0;i<config.process.argv.length;i++) {
       var arg = config.process.argv[i];
@@ -116,7 +117,7 @@ var jh = {
     config.emitter = new config.requires.events.EventEmitter();
     return this;
   },
-  register_events:function(emitter) {
+  "register_events": function(emitter) {
     emitter.on('execute', function(dir, config) {
       var dir = dir ? dir : config.process.argv[config.process.argv.length-1];
       config.requires.fs.readdir(dir, function(err, filenames) {
@@ -216,7 +217,7 @@ var jh = {
 
     return this
   },
-  validate_args:function(config) {
+  "validate_args": function(config) {
     var last_arg = config.process.argv[config.process.argv.length-1];
     
     // validate parameter count  
@@ -241,7 +242,7 @@ var jh = {
 
     return this
   },
-  validate_loggers:function(config) {
+  "validate_loggers": function(config) {
     if(!config.logger.error)
       config.logger.error = config.requires.fs.createWriteStream(config.filenames.error_xml, {'flags': 'w'});
 
