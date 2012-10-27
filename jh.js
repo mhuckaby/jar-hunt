@@ -112,23 +112,23 @@ var jh = {
         config.logger.error = fs.createWriteStream(config.process.argv[i+1], {'flags': 'w'});
       }  
     }
-      config.emitter = new config.requires.events.EventEmitter();
+
+    config.emitter = new config.requires.events.EventEmitter();
     return this;
   },
   register_events:function(emitter){
     emitter.on('execute', function(dir, config){
       var dir = dir ? dir : config.process.argv[config.process.argv.length-1];
       config.requires.fs.readdir(dir, function(err, filenames){
-              if(filenames){
-                        filenames.forEach(function(filename){
-                            var qualified_filename = (dir ? (dir + '/') : '') + filename;
-                            config.emitter.emit('filter', qualified_filename, config);
-                        })
-              }else{
-                  console.log('no files found : ' + dir);
-              }
+        if(filenames){
+          filenames.forEach(function(filename){
+            var qualified_filename = (dir ? (dir + '/') : '') + filename;
+            config.emitter.emit('filter', qualified_filename, config);
+          })
+        }else{
+          config.console.log('no files found : ' + dir);
         }
-      )
+      })
     })
     
     emitter.on('filter', function(filename, config){
@@ -143,38 +143,38 @@ var jh = {
       })
     })
 
-        var queue;
+    var queue;
     emitter.on('queue', function(filename, config){
-            if(queue){
-                queue.push(filename);
-            }else{
-                // first
-                queue = new Array()
-                emitter.emit('generate_hash_asynch', filename, config, function(){
-                    emitter.emit('chew-queue', config);
-                })
-            }
+      if(queue){
+        queue.push(filename);
+      }else{
+        // first
+        queue = new Array()
+        emitter.emit('generate_hash_asynch', filename, config, function(){
+          emitter.emit('chew-queue', config);
+        })
+      }
     })
 
     emitter.on('chew-queue', function(config){
-            if(queue.length){
-                emitter.emit('generate_hash_asynch', queue.pop(), config, function(){
-                    emitter.emit('chew-queue', config);
-                })
-            }
+      if(queue.length){
+        emitter.emit('generate_hash_asynch', queue.pop(), config, function(){
+          emitter.emit('chew-queue', config);
+        })
+      }
     })
 
     emitter.on('generate_hash_asynch', function(filename, config, post_read_callback){
-            config.requires.fs.readFile(filename, function(err, data){
-                post_read_callback(); // emfile error is avoided
+      config.requires.fs.readFile(filename, function(err, data){
+        post_read_callback(); // emfile error is avoided
 
-                var hash = config.requires.crypto.createHash('sha1').update(data).digest('hex');
+        var hash = config.requires.crypto.createHash('sha1').update(data).digest('hex');
 
-                if(config.msgs.found_jar){
-                    config.console.log(config.requires.util.format(config.msgs.found_jar, filename, hash));
-                }
+        if(config.msgs.found_jar){
+          config.console.log(config.requires.util.format(config.msgs.found_jar, filename, hash));
+        }
 
-                config.emitter.emit('generate_url', filename, hash, config);
+        config.emitter.emit('generate_url', filename, hash, config);
       })
     })
 
