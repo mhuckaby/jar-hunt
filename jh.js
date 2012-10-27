@@ -90,23 +90,23 @@ var jh = {
         '</dependency>\n'
     }
   },
-  execute:function(config){
+  execute:function(config) {
     config.emitter.emit('execute', null, config);
   },
-  initialize:function(config){
+  initialize:function(config) {
     // cmd line args
-    for(var i=0;i<config.process.argv.length;i++){
+    for(var i=0;i<config.process.argv.length;i++) {
       var arg = config.process.argv[i];
-      if('-r' == arg){
+      if('-r' == arg) {
         config.recursive = true;
-      }else if('-s' == arg){
+      }else if('-s' == arg) {
         // suppress 'found' output
         config.msgs.found_jar = null;
-      }else if('-x' == arg && (config.process.argv.length-1 > i)){
+      }else if('-x' == arg && (config.process.argv.length-1 > i)) {
         // set dependency log filename
         config.requires.fs.unlink(config.process.argv[i+1]);
         config.logger.info = config.fs.createWriteStream(args[i+1], {'flags': 'w'});
-      }else if('-e' == arg && (config.process.argv.length-1 > i)){
+      }else if('-e' == arg && (config.process.argv.length-1 > i)) {
         // set error log filename
         config.requires.fs.unlink(config.process.argv[i+1]);
         config.logger.error = fs.createWriteStream(config.process.argv[i+1], {'flags': 'w'});
@@ -116,12 +116,12 @@ var jh = {
     config.emitter = new config.requires.events.EventEmitter();
     return this;
   },
-  register_events:function(emitter){
-    emitter.on('execute', function(dir, config){
+  register_events:function(emitter) {
+    emitter.on('execute', function(dir, config) {
       var dir = dir ? dir : config.process.argv[config.process.argv.length-1];
-      config.requires.fs.readdir(dir, function(err, filenames){
-        if(filenames){
-          filenames.forEach(function(filename){
+      config.requires.fs.readdir(dir, function(err, filenames) {
+        if(filenames) {
+          filenames.forEach(function(filename) {
             var qualified_filename = (dir ? (dir + '/') : '') + filename;
             config.emitter.emit('filter', qualified_filename, config);
           })
@@ -131,12 +131,12 @@ var jh = {
       })
     })
     
-    emitter.on('filter', function(filename, config){
-      config.requires.fs.stat(filename, function(error, stats){
-        if(config.recursive && stats.isDirectory()){
+    emitter.on('filter', function(filename, config) {
+      config.requires.fs.stat(filename, function(error, stats) {
+        if(config.recursive && stats.isDirectory()) {
           config.emitter.emit('execute', filename, config);
         }else{
-          if(filename.match(/\.jar$/)){
+          if(filename.match(/\.jar$/)) {
             config.emitter.emit('queue', filename, config);
           }
         }
@@ -144,33 +144,33 @@ var jh = {
     })
 
     var queue;
-    emitter.on('queue', function(filename, config){
-      if(queue){
+    emitter.on('queue', function(filename, config) {
+      if(queue) {
         queue.push(filename);
       }else{
         // first
         queue = new Array()
-        emitter.emit('generate_hash_asynch', filename, config, function(){
+        emitter.emit('generate_hash_asynch', filename, config, function() {
           emitter.emit('chew-queue', config);
         })
       }
     })
 
-    emitter.on('chew-queue', function(config){
-      if(queue.length){
-        emitter.emit('generate_hash_asynch', queue.pop(), config, function(){
+    emitter.on('chew-queue', function(config) {
+      if(queue.length) {
+        emitter.emit('generate_hash_asynch', queue.pop(), config, function() {
           emitter.emit('chew-queue', config);
         })
       }
     })
 
-    emitter.on('generate_hash_asynch', function(filename, config, post_read_callback){
-      config.requires.fs.readFile(filename, function(err, data){
+    emitter.on('generate_hash_asynch', function(filename, config, post_read_callback) {
+      config.requires.fs.readFile(filename, function(err, data) {
         post_read_callback(); // emfile error is avoided
 
         var hash = config.requires.crypto.createHash('sha1').update(data).digest('hex');
 
-        if(config.msgs.found_jar){
+        if(config.msgs.found_jar) {
           config.console.log(config.requires.util.format(config.msgs.found_jar, filename, hash));
         }
 
@@ -178,12 +178,12 @@ var jh = {
       })
     })
 
-    emitter.on('generate_url', function(filename, hash, config){
+    emitter.on('generate_url', function(filename, hash, config) {
       var param = encodeURIComponent(config.requires.util.format(config.url.param_template, hash));
       config.emitter.emit('search', filename, config.requires.util.format(config.url.template, param), config);
     })
 
-    emitter.on('search', function(filename, path, config){
+    emitter.on('search', function(filename, path, config) {
       var options = {
         'host':config.http_options.host,
         'port':config.http_options.port,
@@ -195,7 +195,7 @@ var jh = {
             var obj = JSON.parse(chunk);
             var value = config.requires.util.format(config.xml.template, obj.response.docs[0].g, obj.response.docs[0].a, obj.response.docs[0].v);
             config.emitter.emit('write_dependency_xml', value, config);
-          }catch(e){
+          }catch(e) {
             var value = config.requires.util.format(config.xml.error_template, filename, options.host, options.path);
             config.emitter.emit('write_error_xml', value, config);
           }
@@ -206,31 +206,31 @@ var jh = {
       })
     })
 
-    emitter.on('write_dependency_xml', function(xml, config){
+    emitter.on('write_dependency_xml', function(xml, config) {
       config.logger.info.write(xml);
     })
 
-    emitter.on('write_error_xml', function(error, config){
+    emitter.on('write_error_xml', function(error, config) {
       config.logger.error.write(error);
     })
 
     return this
   },
-  validate_args:function(config){
+  validate_args:function(config) {
     var last_arg = config.process.argv[config.process.argv.length-1];
     
     // validate parameter count  
-    if(last_arg == config.filenames.this_script){
-      config.msgs.help_text.forEach(function(text){
+    if(last_arg == config.filenames.this_script) {
+      config.msgs.help_text.forEach(function(text) {
          config.console.log(text);
       })
       config.process.exit();
     }
     
     // validate directory was supplied and that it exists
-    if(config.requires.fs.existsSync(last_arg)){
+    if(config.requires.fs.existsSync(last_arg)) {
       var stat = config.requires.fs.statSync(last_arg);
-      if(!stat.isDirectory()){
+      if(!stat.isDirectory()) {
         config.console.log(config.requires.util.format(config.msgs.validation_not_directory, last_arg));
         config.requires.process.exit();
       }
@@ -241,7 +241,7 @@ var jh = {
 
     return this
   },
-  validate_loggers:function(config){
+  validate_loggers:function(config) {
     if(!config.logger.error)
       config.logger.error = config.requires.fs.createWriteStream(config.filenames.error_xml, {'flags': 'w'});
 
