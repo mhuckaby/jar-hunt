@@ -38,7 +38,7 @@ Copyright 2012 Matthew David Huckaby
 */
 
 var jh = {
-"config": {
+  "config": {
     "console": console,
     "emitter": null,
     "filenames": {
