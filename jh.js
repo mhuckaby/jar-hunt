@@ -93,7 +93,7 @@ var jarhunt_context = {
       }
     };
   },
-  "jarHunterInstance": function (config) {
+  "jarHuntInstance": function (config) {
     var config = config || this.configInstance();
     var private = {
       "initialize": function() {
@@ -271,7 +271,7 @@ var jarhunt_context = {
 
 (function() {
   jarhunt_context
-    .jarHunterInstance(
+    .jarHuntInstance(
       jarhunt_context.configInstance()
     ).execute();
 })();
