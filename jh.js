@@ -100,7 +100,12 @@ var jarhunt_context = {
         for(var i=0;i<config.process.argv.length;i++) {
           var arg = config.process.argv[i];
 
-          if('-r' == arg) {
+          if('-e' == arg && (config.process.argv.length-1 > i)) {
+            // set error log filename
+            config.requires.fs.unlink(config.process.argv[i+1]);
+            config.logger.error =
+              config.requires.fs.createWriteStream(config.process.argv[i+1], {"flags": "w"});
+          }else if('-r' == arg) {
             config.recursive = true;
           }else if('-s' == arg) {
             // suppress 'found' output
@@ -109,11 +114,6 @@ var jarhunt_context = {
             // set dependency log filename
             config.requires.fs.unlink(config.process.argv[i+1]);
             config.logger.info =
-                config.requires.fs.createWriteStream(config.process.argv[i+1], {"flags": "w"});
-          }else if('-e' == arg && (config.process.argv.length-1 > i)) {
-            // set error log filename
-            config.requires.fs.unlink(config.process.argv[i+1]);
-            config.logger.error =
                 config.requires.fs.createWriteStream(config.process.argv[i+1], {"flags": "w"});
           }
         }
