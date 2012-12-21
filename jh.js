@@ -96,25 +96,36 @@ var jarhunt_context = {
     config = config || this.configInstance();
     var initialize = {
       "handle_cmd_line_arguments": function() {
+
+        var find_next_arg = function(i) {
+          return config.process.argv.length-1 > i ? config.process.argv[i+1] : null;
+        };
+
         // cmd line arguments
         for(var i=0;i<config.process.argv.length;i++) {
           var arg = config.process.argv[i];
+          var next_arg = find_next_arg(i);
 
-          if('-e' == arg && (config.process.argv.length-1 > i)) {
+          if('-e' == arg && next_arg) {
             // set error log filename
-            config.requires.fs.unlink(config.process.argv[i+1]);
+            config.requires.fs.unlink(next_arg);
             config.logger.error =
-              config.requires.fs.createWriteStream(config.process.argv[i+1], {"flags": "w"});
+              config.requires.fs.createWriteStream(next_arg, {"flags": "w"});
+          }if('-f' == arg && next_arg) {
+            // set error log filename
+            config.requires.fs.unlink(next_arg);
+            config.logger.error =
+              config.requires.fs.createWriteStream(next_arg, {"flags": "w"});
           }else if('-r' == arg) {
             config.recursive = true;
           }else if('-s' == arg) {
             // suppress 'found' output
             config.msgs.found_jar = null;
-          }else if('-x' == arg && (config.process.argv.length-1 > i)) {
+          }else if('-x' == arg && next_arg) {
             // set dependency log filename
-            config.requires.fs.unlink(config.process.argv[i+1]);
+            config.requires.fs.unlink(next_arg);
             config.logger.info =
-                config.requires.fs.createWriteStream(config.process.argv[i+1], {"flags": "w"});
+                config.requires.fs.createWriteStream(next_arg, {"flags": "w"});
           }
         }
 
