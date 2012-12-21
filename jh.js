@@ -47,14 +47,17 @@ var jarhunt_context = {
         "error_xml": "error.xml",
         "this_script": __filename
       },
+
       "http_options": {
         "host": "search.maven.org",
         "port": 80
       },
+
       "logger": {
         "error": null,
         "info": null
       },
+
       "msgs": {
         "found_jar": "found \t: %s\nhash \t: %s",
         "help_text": ['jar-hunt, v.1.0.3',
@@ -67,6 +70,7 @@ var jarhunt_context = {
         "validation_not_directory": "argument, \"%s\" is not a directory:",
         "validation_dir_ne": "directory, \"%s\" does not exist."
       },
+
       "process": process,
       "recursive": false,
       "requires": {
@@ -77,10 +81,12 @@ var jarhunt_context = {
         "path": require('path'),
         "util": require('util')
       },
+
       "url": {
         "param_template": ":\"%s\"",
         "template": "/solrsearch/select?q=1%s&rows=20&wt=json"
       },
+
       "xml": {
         "error_template": "<error\nfile=\"%s\"\nurl=\"%s%s\" />\n",
         "template":
@@ -92,6 +98,7 @@ var jarhunt_context = {
       }
     };
   },
+
   "jarHuntInstance": function (config) {
     config = config || this.configInstance();
     var initialize = {
@@ -132,7 +139,9 @@ var jarhunt_context = {
         config.emitter = new config.requires.events.EventEmitter();
         return this;
       },
+
       "register_events": function(emitter) {
+
         emitter.on('execute', function(dir, config) {
           dir = dir ? dir : config.process.argv[config.process.argv.length-1];
           config.requires.fs.readdir(dir, function(err, filenames) {
@@ -245,6 +254,7 @@ var jarhunt_context = {
 
         return this
       },
+
       "validate_args": function() {
         var last_arg = config.process.argv[config.process.argv.length-1];
 
@@ -271,6 +281,7 @@ var jarhunt_context = {
 
         return this;
       },
+
       "validate_loggers": function() {
         if(!config.logger.error)
           config.logger.error = config.requires.fs.createWriteStream(config.filenames.error_xml, {'flags': 'w'});
@@ -293,12 +304,11 @@ var jarhunt_context = {
         config.emitter.emit('execute', null, config);
       }
     };
+
   }
 };
 
 (function() {
   jarhunt_context
-    .jarHuntInstance(
-      jarhunt_context.configInstance()
-    ).execute();
+    .jarHuntInstance(jarhunt_context.configInstance()).execute();
 })();
