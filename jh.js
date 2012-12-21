@@ -118,11 +118,6 @@ var jarhunt_context = {
             config.requires.fs.unlink(next_arg);
             config.logger.error =
               config.requires.fs.createWriteStream(next_arg, {"flags": "w"});
-          }if('-f' == arg && next_arg) {
-            // set error log filename
-            config.requires.fs.unlink(next_arg);
-            config.logger.error =
-              config.requires.fs.createWriteStream(next_arg, {"flags": "w"});
           }else if('-r' == arg) {
             config.recursive = true;
           }else if('-s' == arg) {
@@ -245,10 +240,16 @@ var jarhunt_context = {
         });
 
         emitter.on('write_dependency_xml', function(xml, config) {
+          if(!config.logger.info)
+            config.logger.info = config.requires.fs.createWriteStream(config.filenames.dependency_xml, {'flags': 'w'});
+
           config.logger.info.write(xml);
         });
 
         emitter.on('write_error_xml', function(error, config) {
+          if(!config.logger.error)
+            config.logger.error = config.requires.fs.createWriteStream(config.filenames.error_xml, {'flags': 'w'});
+
           config.logger.error.write(error);
         });
 
@@ -280,17 +281,8 @@ var jarhunt_context = {
         }
 
         return this;
-      },
-
-      "validate_loggers": function() {
-        if(!config.logger.error)
-          config.logger.error = config.requires.fs.createWriteStream(config.filenames.error_xml, {'flags': 'w'});
-
-        if(!config.logger.info)
-          config.logger.info = config.requires.fs.createWriteStream(config.filenames.dependency_xml, {'flags': 'w'});
-
-        return this;
       }
+
     };
 
     return {
@@ -298,7 +290,6 @@ var jarhunt_context = {
         initialize
           .validate_args()
           .handle_cmd_line_arguments()
-          .validate_loggers()
           .register_events(config.emitter);
 
         config.emitter.emit('execute', null, config);
