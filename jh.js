@@ -149,7 +149,7 @@ var jarhunt_context = {
               filenames.forEach(function(filename) {
                 var qualified_filename = (dir ? (dir + '/') : '') + filename;
                 config.emitter.emit('filter', qualified_filename, config);
-              })
+              });
             }else{
               config.console.log('no files found : ' + dir);
             }
