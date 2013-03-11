@@ -9,12 +9,12 @@ generating a SHA-1 hash value for each encountered jar-file which is then used t
 Useful for assessing name and version of directories of vaguely named jar files.
 
 usage:
-	node jh.js [-s -x $filename -e $filename] ${directory_that_contains_jars}
+	node jh.js [-s -x $filename -e $filename] $directory_that_contains_jars
 
-	-e ${filename} to write error output, default is, "error.xml"
+	-e $filename to write error output, default is, "error.xml"
 	-r recursively search for jar-files
 	-s suppress "found" messages
-	-x ${filename} to write xml output, default is, "dependency.xml"
+	-x $filename to write xml output, default is, "dependency.xml"
 
 
 Thanks to Sonatype, Inc. for hosting central repository jar and look-up service (search.maven.org)
