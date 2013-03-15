@@ -79,7 +79,8 @@ var jarhunt_context = {
         "fs": require('fs'),
         "http": require('http'),
         "path": require('path'),
-        "util": require('util')
+        "util": require('util'),
+        "process": process
       },
 
       "url": {
