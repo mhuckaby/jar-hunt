@@ -109,6 +109,8 @@ var jarhunt_context = {
           return config.process.argv.length-1 > i ? config.process.argv[i+1] : null;
         };
 
+        var unlinkCallback = function() {}
+
         // cmd line arguments
         for(var i=0;i<config.process.argv.length;i++) {
           var arg = config.process.argv[i];
@@ -116,7 +118,7 @@ var jarhunt_context = {
 
           if('-e' === arg && next_arg) {
             // set error log filename
-            config.requires.fs.unlink(next_arg);
+            config.requires.fs.unlink(next_arg, unlinkCallback);
             config.logger.error =
               config.requires.fs.createWriteStream(next_arg, {"flags": "w"});
           }else if('-r' === arg) {
@@ -126,7 +128,7 @@ var jarhunt_context = {
             config.msgs.found_jar = null;
           }else if('-x' === arg && next_arg) {
             // set dependency log filename
-            config.requires.fs.unlink(next_arg);
+            config.requires.fs.unlink(next_arg, unlinkCallback);
             config.logger.info =
                 config.requires.fs.createWriteStream(next_arg, {"flags": "w"});
           }
