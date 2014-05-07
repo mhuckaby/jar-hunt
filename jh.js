@@ -114,17 +114,17 @@ var jarhunt_context = {
           var arg = config.process.argv[i];
           var next_arg = find_next_arg(i);
 
-          if('-e' == arg && next_arg) {
+          if('-e' === arg && next_arg) {
             // set error log filename
             config.requires.fs.unlink(next_arg);
             config.logger.error =
               config.requires.fs.createWriteStream(next_arg, {"flags": "w"});
-          }else if('-r' == arg) {
+          }else if('-r' === arg) {
             config.recursive = true;
-          }else if('-s' == arg) {
+          }else if('-s' === arg) {
             // suppress 'found' output
             config.msgs.found_jar = null;
-          }else if('-x' == arg && next_arg) {
+          }else if('-x' === arg && next_arg) {
             // set dependency log filename
             config.requires.fs.unlink(next_arg);
             config.logger.info =
@@ -261,7 +261,7 @@ var jarhunt_context = {
         var last_arg = config.process.argv[config.process.argv.length-1];
 
         // validate parameter count
-        if(last_arg == config.filenames.this_script) {
+        if(last_arg === config.filenames.this_script) {
           config.msgs.help_text.forEach(function(text) {
              config.console.log(text);
           });
